@@ -587,10 +587,16 @@ void Solver::analyzeFinal(Lit p, vec<Lit>& out_conflict)
                 out_conflict.push(~trail[i]);
             }else{
                 Clause& c = ca[reason(x)];
-                assert(!c.is_atmost());
-                for (int j = 1; j < c.size(); j++)
-                    if (level(var(c[j])) > 0)
-                        seen[var(c[j])] = 1;
+                if (!c.is_atmost()) {
+                    for (int j = 1; j < c.size(); j++)
+                        if (level(var(c[j])) > 0)
+                            seen[var(c[j])] = 1;
+                }
+                else {
+                    for (int j = 0; j < c.size(); j++)
+                        if (value(c[j]) == l_True && level(var(c[j])) > 0)
+                            seen[var(c[j])] = 1;
+                }
             }
             seen[x] = 0;
         }
