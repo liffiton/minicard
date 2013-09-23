@@ -792,6 +792,34 @@ lbool Solver::solve_()
     return status;
 }
 
+bool Solver::implies(const vec<Lit>& assumps, vec<Lit>& out, bool all=false)
+{
+    trail_lim.push(trail.size());
+    for (int i = 0; i < assumps.size(); i++){
+        Lit a = assumps[i];
+
+        if (value(a) == l_False){
+            cancelUntil(0);
+            return false;
+        }else if (value(a) == l_Undef)
+            uncheckedEnqueue(a);
+    }
+
+    // Adapted from similar function in MiniSat
+    // Added option to get all implications, including level 0 assignments.
+    unsigned trail_before = (all) ? 0 : trail.size();
+    bool     ret          = true;
+    if (propagate() == CRef_Undef){
+        out.clear();
+        for (int j = trail_before; j < trail.size(); j++)
+            out.push(trail[j]);
+    }else
+        ret = false;
+
+    cancelUntil(0);
+    return ret;
+}
+
 //=================================================================================================
 // Writing CNF to DIMACS:
 // 
