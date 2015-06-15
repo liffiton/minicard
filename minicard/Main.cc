@@ -34,6 +34,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "utils/ParseUtils.h"
 #include "utils/Options.h"
 #include "minicard/Dimacs.h"
+#include "minicard/opb.h"
 #include "minicard/Solver.h"
 
 using namespace Minisat;
@@ -89,6 +90,7 @@ int main(int argc, char** argv)
         // Extra options:
         //
         IntOption    verb   ("MAIN", "verb",   "Verbosity level (0=silent, 1=some, 2=more).", 1, IntRange(0, 2));
+        BoolOption   opt_opb("MAIN", "opb",    "Parse the input as OPB (linear cardinality constraints only", false);
         IntOption    cpu_lim("MAIN", "cpu-lim","Limit on CPU time allowed in seconds.\n", INT32_MAX, IntRange(0, INT32_MAX));
         IntOption    mem_lim("MAIN", "mem-lim","Limit on memory usage in megabytes.\n", INT32_MAX, IntRange(0, INT32_MAX));
         
@@ -137,7 +139,13 @@ int main(int argc, char** argv)
             printf("============================[ Problem Statistics ]=============================\n");
             printf("|                                                                             |\n"); }
         
-        parse_DIMACS(in, S);
+        if (opt_opb) {
+            parse_OPB(in, S);
+        }
+        else {
+            parse_DIMACS(in, S);
+        }
+
         gzclose(in);
         FILE* res = (argc >= 3) ? fopen(argv[2], "wb") : NULL;
         
