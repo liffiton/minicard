@@ -1,4 +1,4 @@
-MiniCARD 1.0, based on MiniSAT 2.2.0
+MiniCARD 1.1, based on MiniSAT 2.2.0
  Mark Liffiton and Jordyn Maglalang
  <mliffito@iwu.edu>,<jmaglala@iwu.edu>
 
@@ -24,6 +24,11 @@ cardinality constraints alongside regular clauses like so:
   3 5 7 0
 
 See the tests/in/ directory for examples.
+
+Version 1.1 adds a basic ability to parse and solve .opb-format instances
+(http://www.cril.univ-artois.fr/PB12/format.pdf) in which the constraints
+are limited to linear cardinality constraints only (i.e., all weights are
+-1 or +1).  To solve .opb instances, use the -opb command line flag.
 
 ================================================================================
 DIRECTORIES:
