@@ -9,7 +9,7 @@
 mode="run"
 TESTSFILE="all_tests.txt"
 
-REMOVELINES_REGEX="^WARNING"
+REMOVELINES_REGEX="^c WARNING"
 
 # setup indicator characters
 chrPass="[32m*[0m"
