@@ -9,6 +9,8 @@
 mode="run"
 TESTSFILE="all_tests.txt"
 
+REMOVELINES_REGEX="^WARNING"
+
 # setup indicator characters
 chrPass="[32m*[0m"
 chrSortSame="[33m^[0m"
@@ -89,6 +91,9 @@ runtest() {
         (( stdErrOutput++ ))
     fi
     rm -f $outfile.ERR
+
+    # Filter out certain lines
+    sed -i -e "/${REMOVELINES_REGEX}/d" $outfile.NEW
 
     if [ $? -gt 128 ] ; then
         # Fatal error! (likely a segfault)
