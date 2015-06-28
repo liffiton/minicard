@@ -181,7 +181,7 @@ int main(int argc, char** argv)
             printf("c \n");
         }
         printf(ret == l_True ? "s SATISFIABLE\n" : ret == l_False ? "s UNSATISFIABLE\n" : "s UNKNOWN\n");
-        if (ret==l_True && S.verbosity > 1) {
+        if (ret==l_True && S.verbosity >= 1) {
             printf("v");
             for (int i = 0; i < S.nVars(); i++)
                 if (S.model[i] != l_Undef)

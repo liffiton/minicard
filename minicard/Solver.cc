@@ -946,7 +946,7 @@ lbool Solver::search(int nof_conflicts)
                 max_learnts             *= learntsize_inc;
 
                 if (verbosity >= 1)
-                    printf("| %9d | %7d %8d %8d | %8d %8d %6.0f | %6.3f %% |\n", 
+                    printf("c | %9d | %7d %8d %8d | %8d %8d %6.0f | %6.3f %% |\n", 
                            (int)conflicts, 
                            (int)dec_vars - (trail_lim.size() == 0 ? trail.size() : trail_lim[0]), nClauses(), (int)clauses_literals, 
                            (int)max_learnts, nLearnts(), (double)learnts_literals/nLearnts(), progressEstimate()*100);
@@ -1059,10 +1059,10 @@ lbool Solver::solve_()
     lbool   status            = l_Undef;
 
     if (verbosity >= 1){
-        printf("============================[ Search Statistics ]==============================\n");
-        printf("| Conflicts |          ORIGINAL         |          LEARNT          | Progress |\n");
-        printf("|           |    Vars  Clauses Literals |    Limit  Clauses Lit/Cl |          |\n");
-        printf("===============================================================================\n");
+        printf("c ============================[ Search Statistics ]==============================\n");
+        printf("c | Conflicts |          ORIGINAL         |          LEARNT          | Progress |\n");
+        printf("c |           |    Vars  Clauses Literals |    Limit  Clauses Lit/Cl |          |\n");
+        printf("c ===============================================================================\n");
     }
 
     // Search:
@@ -1075,7 +1075,7 @@ lbool Solver::solve_()
     }
 
     if (verbosity >= 1)
-        printf("===============================================================================\n");
+        printf("c ===============================================================================\n");
 
 
     if (status == l_True){
@@ -1191,7 +1191,7 @@ void Solver::toDimacs(FILE* f, const vec<Lit>& assumps)
         toDimacs(f, ca[clauses[i]], map, max);
 
     if (verbosity > 0)
-        printf("Wrote %d clauses with %d variables.\n", cnt, max);
+        printf("c Wrote %d clauses with %d variables.\n", cnt, max);
 }
 
 
@@ -1207,7 +1207,7 @@ void Solver::relocAll(ClauseAllocator& to)
     for (int v = 0; v < nVars(); v++)
         for (int s = 0; s < 2; s++){
             Lit p = mkLit(v, s);
-            // printf(" >>> RELOCING: %s%d\n", sign(p)?"-":"", var(p)+1);
+            // printf("c  >>> RELOCING: %s%d\n", sign(p)?"-":"", var(p)+1);
             vec<Watcher>& ws = watches[p];
             for (int j = 0; j < ws.size(); j++)
                 ca.reloc(ws[j].cref, to);
@@ -1242,7 +1242,7 @@ void Solver::garbageCollect()
 
     relocAll(to);
     if (verbosity >= 2)
-        printf("|  Garbage collection:   %12d bytes => %12d bytes             |\n", 
+        printf("c |  Garbage collection:   %12d bytes => %12d bytes             |\n", 
                ca.size()*ClauseAllocator::Unit_Size, to.size()*ClauseAllocator::Unit_Size);
     to.moveTo(ca);
 }
