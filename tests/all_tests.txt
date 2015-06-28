@@ -85,5 +85,5 @@
 ../minicard/minicard -verb=0 -opb in/test.opb,out/test.opb.out
 ../minicard/minicard -verb=0 -opb in/test2.opb,out/test2.opb.out
 ../minicard/minicard -verb=0 -opb in/test3.opb,out/test3.opb.out
-../minicard/minicard -verb=0 -opb in/normalized-08.opb,out/normalized-08.opb.out
-../minicard/minicard -verb=0 -opb in/normalized-08_reduced_to_SAT.opb,out/normalized-08_reduced_to_SAT.opb.out
+../minicard/minicard -verb=0 -opb in/normalized-08.opb.gz,out/normalized-08.opb.out
+../minicard/minicard -verb=0 -opb in/normalized-08_reduced_to_SAT.opb.gz,out/normalized-08_reduced_to_SAT.opb.out
