@@ -170,7 +170,7 @@ bool Solver::addAtMost_(vec<Lit>& ps, int k) {
     assert(decisionLevel() == 0);
     if (!ok) return false;
         
-    // Remove false, already-true, opposite, and duplicate variables
+    // Remove false, already-true, and opposite variables
     sort(ps);
     Lit p; int i, j;
     for (i = j = 0, p = lit_Undef; i < ps.size(); i++) {
@@ -180,10 +180,6 @@ bool Solver::addAtMost_(vec<Lit>& ps, int k) {
         }
         else if (value(ps[i]) == l_False) {
             // Already false: left out, but bound unchanged
-            continue;
-        }
-        else if (ps[i] == p) {
-            // Duplicate: leave this one out
             continue;
         }
         else if (ps[i] == ~p) {

@@ -1,0 +1,6 @@
+c test_dupes.cnfp
+c test that duplicate literals are retained in cardinality constraints
+p cnf+ 5 3
+1 1 1 1 2 3 4 5 <= 4
+1 0
+2 0
