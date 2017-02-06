@@ -170,7 +170,7 @@ bool Solver::addAtMost_(vec<Lit>& ps, int k) {
     assert(decisionLevel() == 0);
     if (!ok) return false;
         
-    // Remove false, already-true, and opposite variables
+    // Remove false or already-true variables; filter opposite literals
     sort(ps);
     Lit p; int i, j;
     for (i = j = 0, p = lit_Undef; i < ps.size(); i++) {
@@ -185,8 +185,13 @@ bool Solver::addAtMost_(vec<Lit>& ps, int k) {
         else if (ps[i] == ~p) {
             // Opposite literals: leave both out and decrement the bound by one
             //                    (exactly one of the two will be true)
-            p = ps[i];
             j--;    // remove the last literal kept
+            if (j > 0) {
+                p = ps[j-1];
+            }
+            else {
+                p = lit_Undef;
+            }
             k--;
         }
         else {
@@ -221,7 +226,9 @@ bool Solver::addAtMost_(vec<Lit>& ps, int k) {
     // Propagate negation of remaining literals if already at bound
     if (k == 0) {
         for (i = 0; i < ps.size(); i++) {
-            uncheckedEnqueue(~ps[i]);
+            if (i == 0 || ps[i] != ps[i-1]) {
+                uncheckedEnqueue(~ps[i]);
+            }
         }
         return ok = (propagate() == CRef_Undef);
     }
@@ -647,6 +654,7 @@ Lit Solver::findNewWatch(CRef cr, Lit p) {
 
         if (newWatch != lit_Undef && c[q] == p) {
             // Haven't hit our watched lit before now, and this *is* our watched lit
+            assert(newWatch == lit_Error);
 
             // Need to find new watch
             for (int next = c.atmost_watches() ; next < c.size() ; next++) {
@@ -723,10 +731,10 @@ CRef Solver::propagate()
 
                 if (newWatch == lit_Undef) {
                     // No new watch found, so we have reached the bound.
-                    // Enque the negation of each remaining literal
+                    // Enqueue the negation of each remaining literal
                     for (int k = 0 ; k < c.atmost_watches() ; k++) {
-                        if (c[k] != p && value(c[k]) != l_False) {
-                            assert(value(c[k]) == l_Undef || value(c[k]) == l_False);
+                        if (c[k] != p && value(c[k]) != l_False && (k==0 || c[k] != c[k-1])) {
+                            assert(value(c[k]) == l_Undef);
                             uncheckedEnqueue(~c[k],cr);
                         }
                     }
