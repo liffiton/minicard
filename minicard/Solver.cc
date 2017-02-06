@@ -645,8 +645,8 @@ Lit Solver::findNewWatch(CRef cr, Lit p) {
             return lit_Error;
         }
 
-        if (c[q] == p) {
-            assert(newWatch == lit_Error);
+        if (newWatch != lit_Undef && c[q] == p) {
+            // Haven't hit our watched lit before now, and this *is* our watched lit
 
             // Need to find new watch
             for (int next = c.atmost_watches() ; next < c.size() ; next++) {
