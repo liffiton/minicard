@@ -209,6 +209,7 @@ int main(int argc, char** argv)
 #endif
     } catch (OutOfMemoryException&){
         printf("c ===============================================================================\n");
+        printf("c Out of memory\n");
         printf("s UNKNOWN\n");
         exit(0);
     }
