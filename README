@@ -32,10 +32,25 @@ Run minicard with the --help and --help-verb flags for details on command line
 options.
 
 
+REFERENCES
+----------
+
+A Cardinality Solver: More Expressive Constraints for Free (Poster Presentation)
+  Mark H. Liffiton and Jordyn C. Maglalang
+  in Proc. 15th International Conference on Theory and Applications of
+     Satisfiability Testing (SAT-2012), 485-486, June 2012.
+
+  Poster (with experimental data):
+    https://sun.iwu.edu/~mliffito/publications/sat12_liffiton_minicard_poster.pdf
+
+  Paper (2 page summary):
+    https://sun.iwu.edu/~mliffito/publications/sat12_liffiton_minicard.pdf
+
+
 HISTORY
 -------
 
-Version 1.2 added duplicate-literal handline in cardinality constraints.  Each
+Version 1.2 added duplicate-literal handling in cardinality constraints.  Each
 copy of a literal within a cardinality constraint will "count" separately
 toward the constraint's bound.  For example, AtMost({x1, x1, x2}, 2) will be
 violated if x1 and x2 are both True.  This allows for "instrumented" or
