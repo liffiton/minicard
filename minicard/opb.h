@@ -70,7 +70,9 @@ static void readConstr(B& in, Solver& S) {
         else if (eagerMatch(in, "=")) {
             int bound = parseInt(in);
             bound += boundoffset;
-            S.addAtMost_(lits, bound);
+            // Keep the original literals for the other half of the equality:
+            // addAtMost_ simplifies its argument in place (and may negate it).
+            S.addAtMost(lits, bound);
             bound = lits.size() - bound;
             for (int i=0;i<lits.size();i++) {
                 lits[i] = ~lits[i];
