@@ -475,10 +475,11 @@ void Solver::analyze(CRef confl, vec<Lit>& out_learnt, int& out_btlevel)
                 out_learnt[j++] = out_learnt[i];
             else{
                 Clause& c = ca[reason(var(out_learnt[i]))];
-                assert(!c.is_atmost());
-                
-                for (int k = 1; k < c.size(); k++)
-                    if (!seen[var(c[k])] && level(var(c[k])) > 0){
+                // An AtMost reason consists of its currently true literals,
+                // not every literal after position zero as for a clause.
+                for (int k = c.is_atmost() ? 0 : 1; k < c.size(); k++)
+                    if ((!c.is_atmost() || value(c[k]) == l_True) &&
+                        !seen[var(c[k])] && level(var(c[k])) > 0){
                         out_learnt[j++] = out_learnt[i];
                         break; }
             }
