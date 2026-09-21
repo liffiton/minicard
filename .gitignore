@@ -8,3 +8,4 @@ depend.mk
 core/minisat*
 simp/minisat*
 minicard*/minicard*
+tests/bin/
