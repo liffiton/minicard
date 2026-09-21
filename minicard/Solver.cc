@@ -26,6 +26,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 **************************************************************************************************/
 
 #include <math.h>
+#include <limits.h>
+#include <stdexcept>
 
 #include "mtl/Sort.h"
 #include "minicard/Solver.h"
@@ -1124,7 +1126,7 @@ bool Solver::implies(const vec<Lit>& assumps, vec<Lit>& out, bool all=false)
 //=================================================================================================
 // Writing CNF to DIMACS:
 // 
-// FIXME: this needs to be rewritten completely.
+// Native cardinality constraints are encoded only for export, not for solving.
 
 static Var mapVar(Var x, vec<Var>& map, Var& max)
 {
@@ -1136,23 +1138,84 @@ static Var mapVar(Var x, vec<Var>& map, Var& max)
 }
 
 
+static uint64_t writeDimacsClause(FILE* f, int a, int b = 0, int c = 0)
+{
+    if (f != NULL){
+        fprintf(f, "%d ", a);
+        if (b != 0) fprintf(f, "%d ", b);
+        if (c != 0) fprintf(f, "%d ", c);
+        fprintf(f, "0\n");
+    }
+    return 1;
+}
+
+
+static uint64_t writeDimacsConstraint(FILE* f, const Clause& c, vec<Var>& map, Var& max)
+{
+    if (!c.is_atmost()){
+        for (int i = 0; i < c.size(); i++){
+            int v = mapVar(var(c[i]), map, max) + 1;
+            if (f != NULL) fprintf(f, "%d ", sign(c[i]) ? -v : v);
+        }
+        if (f != NULL) fprintf(f, "0\n");
+        return 1;
+    }
+
+    int bound = c.size() - c.atmost_watches() + 1;
+    if (bound >= c.size()) return 0;
+    if (bound < 0){
+        if (f != NULL) fprintf(f, "0\n");
+        return 1;
+    }
+
+    // A sequential counter: previous[j] records at least j+1 true occurrences
+    // in the processed prefix. Occurrences, including duplicates, count separately.
+    // A NULL stream performs the identical allocation/counting pass for the header.
+    vec<int> previous, current;
+    uint64_t clauses = 0;
+    for (int i = 0; i < c.size(); i++){
+        int v = mapVar(var(c[i]), map, max) + 1;
+        int p = sign(c[i]) ? -v : v;
+        if (bound == 0){
+            clauses += writeDimacsClause(f, -p);
+            continue;
+        }
+        current.clear();
+        for (int j = 0; j < bound && j <= i; j++){
+            if (max == INT_MAX) throw std::overflow_error("DIMACS auxiliary variable limit exceeded");
+            current.push(++max);
+        }
+        clauses += writeDimacsClause(f, -p, current[0]);
+        for (int j = 0; j < previous.size(); j++){
+            clauses += writeDimacsClause(f, -previous[j], current[j]);
+            if (j + 1 < bound)
+                clauses += writeDimacsClause(f, -p, -previous[j], current[j + 1]);
+            else
+                clauses += writeDimacsClause(f, -p, -previous[j]);
+        }
+        current.moveTo(previous);
+    }
+    return clauses;
+}
+
+
 void Solver::toDimacs(FILE* f, Clause& c, vec<Var>& map, Var& max)
 {
-    if (satisfied(c)) return;
-
-    for (int i = 0; i < c.size(); i++)
-        if (value(c[i]) != l_False)
-            fprintf(f, "%s%d ", sign(c[i]) ? "-" : "", mapVar(var(c[i]), map, max)+1);
-    fprintf(f, "0\n");
+    writeDimacsConstraint(f, c, map, max);
 }
 
 
 void Solver::toDimacs(const char *file, const vec<Lit>& assumps)
 {
-    FILE* f = fopen(file, "wr");
+    FILE* f = fopen(file, "w");
     if (f == NULL)
         fprintf(stderr, "could not open file %s\n", file), exit(1);
-    toDimacs(f, assumps);
+    try {
+        toDimacs(f, assumps);
+    } catch (...) {
+        fclose(f);
+        throw;
+    }
     fclose(f);
 }
 
@@ -1164,38 +1227,33 @@ void Solver::toDimacs(FILE* f, const vec<Lit>& assumps)
         fprintf(f, "p cnf 1 2\n1 0\n-1 0\n");
         return; }
 
-    vec<Var> map; Var max = 0;
-
-    // Cannot use removeClauses here because it is not safe
-    // to deallocate them at this point. Could be improved.
-    int cnt = 0;
+    // Preserve original variable numbers. Root assignments must be exported too:
+    // insertion and simplification may have removed the clauses that implied them.
+    vec<Var> map;
+    for (Var v = 0; v < nVars(); v++) map.push(v);
+    uint64_t cnt = assumps.size();
+    for (int i = 0; i < assumps.size(); i++)
+        if (var(assumps[i]) < 0 || var(assumps[i]) >= nVars())
+            throw std::out_of_range("DIMACS assumption refers to an unknown variable");
+    for (Var v = 0; v < nVars(); v++)
+        if (value(v) != l_Undef && level(v) == 0) cnt++;
+    Var max = nVars();
     for (int i = 0; i < clauses.size(); i++)
-        if (!satisfied(ca[clauses[i]]))
-            cnt++;
-        
+        cnt += writeDimacsConstraint(NULL, ca[clauses[i]], map, max);
+
+    fprintf(f, "p cnf %d %llu\n", max, (unsigned long long)cnt);
+    for (Var v = 0; v < nVars(); v++)
+        if (value(v) != l_Undef && level(v) == 0)
+            writeDimacsClause(f, value(v) == l_True ? v + 1 : -(v + 1));
+    for (int i = 0; i < assumps.size(); i++)
+        writeDimacsClause(f, sign(assumps[i]) ? -(var(assumps[i]) + 1) : var(assumps[i]) + 1);
+    Var next = nVars();
     for (int i = 0; i < clauses.size(); i++)
-        if (!satisfied(ca[clauses[i]])){
-            Clause& c = ca[clauses[i]];
-            for (int j = 0; j < c.size(); j++)
-                if (value(c[j]) != l_False)
-                    mapVar(var(c[j]), map, max);
-        }
-
-    // Assumptions are added as unit clauses:
-    cnt += assumptions.size();
-
-    fprintf(f, "p cnf %d %d\n", max, cnt);
-
-    for (int i = 0; i < assumptions.size(); i++){
-        assert(value(assumptions[i]) != l_False);
-        fprintf(f, "%s%d 0\n", sign(assumptions[i]) ? "-" : "", mapVar(var(assumptions[i]), map, max)+1);
-    }
-
-    for (int i = 0; i < clauses.size(); i++)
-        toDimacs(f, ca[clauses[i]], map, max);
+        writeDimacsConstraint(f, ca[clauses[i]], map, next);
+    assert(next == max);
 
     if (verbosity > 0)
-        printf("c Wrote %d clauses with %d variables.\n", cnt, max);
+        printf("c Wrote %llu clauses with %d variables.\n", (unsigned long long)cnt, max);
 }
 
 

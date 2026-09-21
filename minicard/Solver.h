@@ -79,7 +79,9 @@ public:
     // Adopted from newer version of Minisat
     bool    implies      (const vec<Lit>& assumps, vec<Lit>& out, bool all);
 
-    void    toDimacs     (FILE* f, const vec<Lit>& assumps);            // Write CNF to file in DIMACS-format.
+    // Write CNF with original variable numbers, root assignments and supplied assumptions.
+    // Native AtMost constraints use an export-only sequential counter with auxiliary variables.
+    void    toDimacs     (FILE* f, const vec<Lit>& assumps);
     void    toDimacs     (const char *file, const vec<Lit>& assumps);
     void    toDimacs     (FILE* f, Clause& c, vec<Var>& map, Var& max);
 
